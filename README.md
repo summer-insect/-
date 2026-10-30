@@ -11,11 +11,9 @@
 
 **直接用（推荐）**
 
-```
-OLED图像助手\dist\OLED图像助手\OLED图像助手.exe
-```
+到 [Releases](https://github.com/summer-insect/-/releases) 下载 `OLED-Image-Assistant-v1.0-win64.zip`，解压到任意目录，双击 `OLED图像助手.exe`。
 
-免安装，自带 Qt 运行时。
+免安装，自带 Python 3.13 与 Qt 6 运行时，不需要装任何东西。
 
 **从源码跑**
 
@@ -35,6 +33,8 @@ python OLED图像助手/main.py
 | `OLED图像助手/` | 工具本体（PySide6 桌面程序 + Keil 工程模板） |
 | `取模工具/` | 早期参考实现：原始 Keil 工程、示例图片与视频素材 |
 
+> 打包好的 exe 不在仓库里，通过 [Releases](https://github.com/summer-insect/-/releases) 分发。这样源码仓库只有约 3MB，克隆快；需要可执行文件的人单独下载即可。
+
 ## 使用环境
 
 ### 一、运行环境（把软件跑起来）
@@ -42,7 +42,7 @@ python OLED图像助手/main.py
 | 项目 | 要求 | 说明 |
 |---|---|---|
 | 操作系统 | Windows 10 / 11（64 位） | 依赖 Qt 6，且用注册表定位 Keil；未在 32 位系统与 Win7 上测试 |
-| 运行方式 A | 直接运行 exe，**无需装 Python** | `dist` 版自带 Python 3.13 与 Qt 运行时 |
+| 运行方式 A | 直接运行 exe，**无需装 Python** | Release 包自带 Python 3.13 与 Qt 运行时 |
 | 运行方式 B | Python 3.10 及以上 | `pip install -r OLED图像助手/requirements.txt`，依赖 PySide6-Essentials ≥ 6.6、Pillow ≥ 10 |
 | 屏幕分辨率 | 建议 1366×768 及以上 | 窗口最小尺寸 1060×660，再小会显示不全 |
 | 磁盘空间 | 约 300MB | exe 目录 131MB，另加每个生成的 Keil 工程约 2MB |
@@ -84,4 +84,5 @@ python OLED图像助手/main.py
 
 ## 说明
 
-仓库中的 `dist/` 是打包好的可执行程序；`取模工具/取模视频/打篮球.mp4`（71.8MB）超过 GitHub 推荐的 50MB 单文件大小，克隆时请耐心等待。
+- 可执行程序通过 [Releases](https://github.com/summer-insect/-/releases) 分发，**不占仓库体积**；每次重新打包只需新发一个 Release 版本，Git 历史不会被二进制文件撑大
+- `取模工具/取模视频/打篮球.mp4`（71.8MB）超过 GitHub 推荐的 50MB 单文件大小，首次克隆会慢一些
