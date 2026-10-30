@@ -4,14 +4,19 @@ __pycache__/
 
 # ---- PyInstaller 中间产物（成品在 dist/，保留）----
 OLED图像助手/build/
+OLED图库助手/build/
 
 # ---- 打包产物：改用 GitHub Release 分发，不进版本库 ----
 OLED图像助手/dist/
+OLED图库助手/dist/
 
 # ---- 本机运行时产物：生成的工程、配置、错误日志 ----
 OLED图像助手/config.json
 OLED图像助手/错误日志.txt
 OLED图像助手/输出/
+OLED图库助手/config.json
+OLED图库助手/错误日志.txt
+OLED图库助手/输出/
 
 # ---- Keil 编译产物 ----
 Objects/
