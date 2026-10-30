@@ -55,6 +55,7 @@ class RenderOptions:
     invert: bool = False
     autocrop: bool = True
     nearest: bool = False
+    sharpen: int = 60        # 收缩放后的锐化强度 0~100：大图缩小时把细节找回来
 
     def copy(self, **kw) -> "RenderOptions":
         return replace(self, **kw)
@@ -132,6 +133,20 @@ def _autocrop(gray: Image.Image, bg_threshold: int = 246) -> Image.Image:
     return gray.crop((left, top, right, bottom))
 
 
+def _progressive_resize(gray: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """逐级减半，缩到约 1~2 倍目标尺寸。
+
+    一次性把 4000px 的图用 LANCZOS 缩到 128px，插值核会跨几十个像素取样，
+    结果是振铃 + 细节被平均成一团灰。每步减半都是面积平均（BOX），
+    等价于对整块像素求均值，色调最忠实，也不会产生振铃。
+    """
+    tw, th = size
+    cur = gray
+    while cur.width > tw * 2 and cur.height > th * 2:
+        cur = cur.resize((max(tw, cur.width // 2), max(th, cur.height // 2)), Image.Resampling.BOX)
+    return cur
+
+
 def _fit_into_canvas(gray: Image.Image, opts: RenderOptions) -> Image.Image:
     """按适应方式缩放到 128x64 画布，居中并应用偏移。"""
     w, h = gray.size
@@ -145,14 +160,28 @@ def _fit_into_canvas(gray: Image.Image, opts: RenderOptions) -> Image.Image:
         new_w = max(1, round(w * ratio))
         new_h = max(1, round(h * ratio))
 
-    resample = Image.Resampling.NEAREST if opts.nearest else Image.Resampling.LANCZOS
-    if (new_w, new_h) != (w, h):
-        gray = gray.resize((new_w, new_h), resample)
+    if opts.nearest:
+        # 像素画模式：不插值、不锐化，保住原始色块
+        fitted = gray.resize((new_w, new_h), Image.Resampling.NEAREST) if (new_w, new_h) != (w, h) else gray
+    elif new_w > w or new_h > h:
+        # 放大：LANCZOS 比面积平均平滑
+        fitted = gray.resize((new_w, new_h), Image.Resampling.LANCZOS)
+    elif (new_w, new_h) != (w, h):
+        small = _progressive_resize(gray, (new_w, new_h))
+        fitted = small.resize((new_w, new_h), Image.Resampling.BOX)
+    else:
+        fitted = gray
+
+    if opts.sharpen > 0 and not opts.nearest:
+        # 面积平均会把边缘磨钝，缩放后补一次反锐化掩模：大图缩小时，
+        # 原本被平均成浅灰的细线会被拉回阈值以下，重新变成看得见的笔画
+        percent = min(250, round(opts.sharpen * 2.2))
+        fitted = fitted.filter(ImageFilter.UnsharpMask(radius=1.0, percent=percent, threshold=3))
 
     canvas = Image.new("L", (OLED_W, OLED_H), 255)
     x = (OLED_W - new_w) // 2 + opts.offset_x
     y = (OLED_H - new_h) // 2 + opts.offset_y
-    canvas.paste(gray, (x, y))
+    canvas.paste(fitted, (x, y))
     return canvas
 
 
@@ -198,7 +227,7 @@ def _mean_adaptive(gray: Image.Image, threshold: int) -> list[bool]:
     return [src[i] < ref[i] - 6 - delta for i in range(len(src))]
 
 
-def prepare_gray(img: Image.Image, opts: RenderOptions) -> Image.Image:
+def _prepare(img: Image.Image, opts: RenderOptions) -> Image.Image:
     """旋转、裁剪、缩放、调色，得到准备量化的 128x64 灰度画布。"""
     gray = _flatten(img)
 
@@ -219,6 +248,33 @@ def prepare_gray(img: Image.Image, opts: RenderOptions) -> Image.Image:
     if opts.contrast:
         gray = ImageEnhance.Contrast(gray).enhance(max(0.0, 1 + opts.contrast / 100))
     return gray
+
+
+def prepare_gray(img: Image.Image, opts: RenderOptions) -> Image.Image:
+    return _prepare(img, opts)
+
+
+def render(img: Image.Image, opts: RenderOptions) -> Image.Image:
+    """返回模式为 "1" 的 128x64 图像，255 表示点亮。"""
+    gray = _prepare(img, opts)
+    pixels = list(gray.getdata())
+    if opts.invert:
+        pixels = [255 - v for v in pixels]
+
+    if opts.method == METHOD_BAYER:
+        bits = _ordered_dither(pixels, opts.threshold)
+    elif opts.method == METHOD_FLOYD:
+        bits = _floyd_steinberg(pixels, opts.threshold)
+    elif opts.method == METHOD_MEAN:
+        bits = _mean_adaptive(gray, opts.threshold)
+        if opts.invert:
+            bits = [not b for b in bits]
+    else:
+        bits = [v < opts.threshold for v in pixels]
+
+    mono = Image.new("1", (OLED_W, OLED_H), 0)
+    mono.putdata([255 if b else 0 for b in bits])
+    return mono
 
 
 def otsu_threshold(gray: Image.Image) -> int:
@@ -251,29 +307,6 @@ def otsu_threshold(gray: Image.Image) -> int:
 
 def suggest_threshold(img: Image.Image, opts: RenderOptions) -> int:
     return otsu_threshold(prepare_gray(img, opts))
-
-
-def render(img: Image.Image, opts: RenderOptions) -> Image.Image:
-    """返回模式为 "1" 的 128x64 图像，255 表示点亮。"""
-    gray = prepare_gray(img, opts)
-    pixels = list(gray.getdata())
-    if opts.invert:
-        pixels = [255 - v for v in pixels]
-
-    if opts.method == METHOD_BAYER:
-        bits = _ordered_dither(pixels, opts.threshold)
-    elif opts.method == METHOD_FLOYD:
-        bits = _floyd_steinberg(pixels, opts.threshold)
-    elif opts.method == METHOD_MEAN:
-        bits = _mean_adaptive(gray, opts.threshold)
-        if opts.invert:
-            bits = [not b for b in bits]
-    else:
-        bits = [v < opts.threshold for v in pixels]
-
-    mono = Image.new("1", (OLED_W, OLED_H), 0)
-    mono.putdata([255 if b else 0 for b in bits])
-    return mono
 
 
 def pack(mono: Image.Image) -> bytes:

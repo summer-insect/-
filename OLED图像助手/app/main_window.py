@@ -269,6 +269,14 @@ class MainWindow(QMainWindow):
         self.invert_check.toggled.connect(self._on_params_changed)
         card.add(self.invert_check)
 
+        self.sharpen_slider = ParamSlider("清晰度", 0, 100, 60)
+        self.sharpen_slider.setToolTip(
+            "大图缩到 128×64 时，细线和文字会被平均成浅灰而消失。"
+            "调高会在缩放后做反锐化，把轮廓和细节拉回阈值以内；"
+            "照片调到 30~60 已够，线稿/文字可到 80；0 = 关闭，最柔和。")
+        self.sharpen_slider.valueChanged.connect(self._on_params_changed)
+        card.add(self.sharpen_slider)
+
         self.autocrop_check = QCheckBox("自动裁掉白边")
         self.autocrop_check.setChecked(True)
         self.autocrop_check.toggled.connect(self._on_params_changed)
@@ -675,6 +683,7 @@ class MainWindow(QMainWindow):
             invert=self.invert_check.isChecked(),
             autocrop=self.autocrop_check.isChecked(),
             nearest=self.nearest_check.isChecked(),
+            sharpen=self.sharpen_slider.value(),
         )
 
     def pins(self) -> codegen.PinConfig:
@@ -930,6 +939,7 @@ class MainWindow(QMainWindow):
         self.contrast_slider.set_value(0)
         self.method_combo.setCurrentIndex(0)
         self.threshold_slider.set_value(128)
+        self.sharpen_slider.set_value(60)
         self.invert_check.setChecked(False)
         self.autocrop_check.setChecked(True)
         self.nearest_check.setChecked(False)
@@ -1208,6 +1218,7 @@ class MainWindow(QMainWindow):
             self.invert_check.setChecked(bool(opts.get("invert", False)))
             self.autocrop_check.setChecked(bool(opts.get("autocrop", True)))
             self.nearest_check.setChecked(bool(opts.get("nearest", False)))
+            self.sharpen_slider.set_value(int(opts.get("sharpen", 60)))
             keil = data.get("keil")
             if keil and Path(keil).is_file():
                 self.uv4 = Path(keil)
@@ -1235,7 +1246,7 @@ class MainWindow(QMainWindow):
                 "offset_y": opts.offset_y, "rotate": opts.rotate, "flip_h": opts.flip_h,
                 "flip_v": opts.flip_v, "brightness": opts.brightness, "contrast": opts.contrast,
                 "method": opts.method, "threshold": opts.threshold, "invert": opts.invert,
-                "autocrop": opts.autocrop, "nearest": opts.nearest,
+                "autocrop": opts.autocrop, "nearest": opts.nearest, "sharpen": opts.sharpen,
             },
         }
         try:
