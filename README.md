@@ -33,7 +33,7 @@ python OLED图像助手/main.py
 | `OLED图像助手/` | 工具本体（PySide6 桌面程序 + Keil 工程模板） |
 | `取模工具/` | 早期参考实现：原始 Keil 工程、示例图片与视频素材 |
 
-> 打包好的 exe 不在仓库里，通过 [Releases](https://github.com/summer-insect/-/releases) 分发。这样源码仓库只有约 3MB，克隆快；需要可执行文件的人单独下载即可。
+> 打包好的 exe 不在仓库里，通过 [Releases](https://github.com/summer-insect/-/releases) 分发。源码本身约 3MB；仓库整体约 70MB，体积几乎全部来自 `取模工具/` 里的演示视频，与代码无关。
 
 ## 使用环境
 
