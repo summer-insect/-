@@ -33,7 +33,7 @@ python OLED图像助手/main.py
 | `OLED图像助手/` | 工具本体（PySide6 桌面程序 + Keil 工程模板） |
 | `取模工具/` | 早期参考实现：原始 Keil 工程、示例图片与视频素材 |
 
-> 打包好的 exe 不在仓库里，通过 [Releases](https://github.com/summer-insect/-/releases) 分发。源码本身约 3MB；仓库整体约 70MB，体积几乎全部来自 `取模工具/` 里的演示视频，与代码无关。
+> 打包好的 exe 不在仓库里，通过 [Releases](https://github.com/summer-insect/-/releases) 分发。源码本身约 3MB；Git 仓库数据约 70MB，体积几乎全部来自 `取模工具/` 里的演示视频，与代码无关。
 
 ## 使用环境
 
@@ -45,7 +45,7 @@ python OLED图像助手/main.py
 | 运行方式 A | 直接运行 exe，**无需装 Python** | Release 包自带 Python 3.13 与 Qt 运行时 |
 | 运行方式 B | Python 3.10 及以上 | `pip install -r OLED图像助手/requirements.txt`，依赖 PySide6-Essentials ≥ 6.6、Pillow ≥ 10 |
 | 屏幕分辨率 | 建议 1366×768 及以上 | 窗口最小尺寸 1060×660，再小会显示不全 |
-| 磁盘空间 | 约 300MB | exe 目录 131MB，另加每个生成的 Keil 工程约 2MB |
+| 磁盘空间 | 约 300MB | 解压后 exe 目录 131MB，另加每个生成的 Keil 工程约 2MB |
 
 ### 二、编译烧录环境（点「一键生成并烧录」时需要）
 
