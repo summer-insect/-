@@ -208,6 +208,10 @@ class MainWindow(QMainWindow):
         interval_row.addStretch(1)
         interval_row.addWidget(self.interval_spin)
         self.frames_card.add_layout(interval_row)
+        self.loop_hint = QLabel("多帧会按「帧间隔」自动循环播放；要转动编码器手动切图请用「OLED 图库助手」")
+        self.loop_hint.setObjectName("Hint")
+        self.loop_hint.setWordWrap(True)
+        self.frames_card.add(self.loop_hint)
         buttons = QHBoxLayout()
         buttons.setSpacing(6)
         for text, slot in (("上移", lambda: self._move_frame(-1)), ("下移", lambda: self._move_frame(1)),
